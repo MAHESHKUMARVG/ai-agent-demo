@@ -1,20 +1,17 @@
 import streamlit as st
-from transformers import pipeline
+import requests
 
 st.set_page_config(page_title="🤖 AI Agent Demo", layout="centered")
 st.title("🤖 Free AI Agent Demo")
-st.write("Built with Streamlit + Hugging Face — 100% free to run!")
+st.write("Built with Streamlit + Hugging Face Inference API — runs 100% in the cloud!")
 
-# Load model (cached so it doesn’t reload every time)
-@st.cache_resource
-def load_model():
-    return pipeline(
-        "text-generation",
-        model="mistralai/Mistral-7B-Instruct-v0.2",
-        device_map="auto"
-    )
+API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
 
-agent = load_model()
+def generate_text(prompt):
+    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.json()[0]["generated_text"]
 
 # Chat interface
 if "history" not in st.session_state:
@@ -25,7 +22,7 @@ user_input = st.text_area("💬 Ask me anything:", placeholder="e.g. Explain wha
 if st.button("Generate"):
     if user_input.strip():
         with st.spinner("🤔 Thinking..."):
-            result = agent(user_input, max_new_tokens=200, temperature=0.7)[0]["generated_text"]
+            result = generate_text(user_input)
         st.session_state.history.append((user_input, result))
 
 # Display chat
