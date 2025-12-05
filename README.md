@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🤖 Free AI Agent Demo
 
 A simple AI chatbot built using open-source models and Streamlit.
@@ -11,3 +12,6 @@ streamlit run app.py
 2. Choose "Streamlit" as SDK
 3. Upload this repo
 4. Done! 🚀
+=======
+# ai-agent-demo
+>>>>>>> 130897b9197dd6d2beb969d1afc4f390cfc66c5f
