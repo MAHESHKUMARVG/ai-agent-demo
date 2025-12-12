@@ -5,7 +5,7 @@ st.set_page_config(page_title="🤖 AI Agent Demo", layout="centered")
 st.title("🤖 Free AI Agent Demo")
 st.write("Built with Streamlit + Hugging Face Inference API — runs 100% in the cloud!")
 
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+API_URL = "https://router.huggingface.co/mistralai/Mistral-7B-Instruct-v0.2"
 headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
 
 def generate_text(prompt):
