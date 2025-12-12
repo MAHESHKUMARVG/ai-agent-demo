@@ -6,26 +6,37 @@ st.title("🤖 Free AI Agent Demo")
 st.write("Built with Streamlit + Hugging Face Inference API — runs 100% in the cloud!")
 
 API_URL = "https://router.huggingface.co/mistralai/Mistral-7B-Instruct-v0.2"
-headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
+headers = {
+    "Authorization": f"Bearer {st.secrets['HF_TOKEN']}",
+    "Accept": "application/json",
+    "X-Wait-For-Model": "true"
+}
 
 def generate_text(prompt):
     payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
-    response = requests.post(API_URL, headers=headers, json=payload).json()
 
-    # If HF returns an error JSON
+    # Get raw response first to debug decode errors
+    raw = requests.post(API_URL, headers=headers, json=payload)
+
+    # If response cannot be parsed as JSON:
+    try:
+        response = raw.json()
+    except:
+        return f"⚠️ HF API returned non-JSON response:\n\n{raw.text}"
+
+    # HF error handling
     if "error" in response:
         return f"⚠️ HF API Error: {response['error']}"
 
-    # New API format (dict)
+    # Router-style dict response
     if isinstance(response, dict) and "generated_text" in response:
         return response["generated_text"]
 
-    # Old API format (list)
+    # Old list response
     if isinstance(response, list) and "generated_text" in response[0]:
         return response[0]["generated_text"]
 
-    return "⚠️ Unexpected HF API response. Try again."
-
+    return f"⚠️ Unexpected API response:\n{response}"
 
 # Chat interface
 if "history" not in st.session_state:
