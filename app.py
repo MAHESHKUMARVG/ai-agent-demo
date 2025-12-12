@@ -3,44 +3,53 @@ import requests
 
 st.set_page_config(page_title="🤖 AI Agent Demo", layout="centered")
 st.title("🤖 Free AI Agent Demo")
-st.write("Built with Streamlit + Hugging Face Inference API — runs 100% in the cloud!")
+st.write("Built with Streamlit + Hugging Face Router API — 100% cloud hosted!")
 
-API_URL = "https://router.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+# -----------------------------
+# Hugging Face Router API Setup
+# -----------------------------
+
+API_URL = "https://router.huggingface.co/v1/completions"
 
 headers = {
     "Authorization": f"Bearer {st.secrets['HF_TOKEN']}",
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-    "X-Wait-For-Model": "true"
+    "Content-Type": "application/json"
 }
 
-def generate_text(prompt):
-    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 200}}
+# -----------------------------
+# Text Generation Function
+# -----------------------------
 
-    # Get raw response first to debug decode errors
+def generate_text(prompt):
+    payload = {
+        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+        "prompt": prompt,
+        "max_tokens": 256
+    }
+
     raw = requests.post(API_URL, headers=headers, json=payload)
 
-    # If response cannot be parsed as JSON:
+    # If HuggingFace returns non-JSON (e.g., "Not Found")
     try:
-        response = raw.json()
+        data = raw.json()
     except:
         return f"⚠️ HF API returned non-JSON response:\n\n{raw.text}"
 
-    # HF error handling
-    if "error" in response:
-        return f"⚠️ HF API Error: {response['error']}"
+    # If HF returns an error JSON
+    if "error" in data:
+        return f"⚠️ HF API Error: {data['error']}"
 
-    # Router-style dict response
-    if isinstance(response, dict) and "generated_text" in response:
-        return response["generated_text"]
+    # Expected OpenAI-like response format:
+    # choices[0].text
+    try:
+        return data["choices"][0]["text"]
+    except:
+        return f"⚠️ Unexpected API response:\n\n{data}"
 
-    # Old list response
-    if isinstance(response, list) and "generated_text" in response[0]:
-        return response[0]["generated_text"]
+# -----------------------------
+# Chat UI
+# -----------------------------
 
-    return f"⚠️ Unexpected API response:\n{response}"
-
-# Chat interface
 if "history" not in st.session_state:
     st.session_state.history = []
 
@@ -52,7 +61,10 @@ if st.button("Generate"):
             result = generate_text(user_input)
         st.session_state.history.append((user_input, result))
 
-# Display chat
+# -----------------------------
+# Chat History Display
+# -----------------------------
+
 for q, a in reversed(st.session_state.history):
     st.markdown(f"**🧑 You:** {q}")
     st.markdown(f"**🤖 Agent:** {a}")
